@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
 #define TAM_LINHA 50
 
@@ -443,6 +444,9 @@ void quickSort(int valorOrdenacao, int *dados, int qtdTotalLinhas)
 
 int main(int argc, char const *argv[])
 {
+    clock_t tempoInicio, tempoFim;
+    double tempoGastoMilissegundos;
+
     int opcaoMenu = -1;
     int subEscolha;
 
@@ -618,6 +622,8 @@ int main(int argc, char const *argv[])
         valor[i] = (int)strtol(dados[i], NULL, 10);
     }
     
+    tempoInicio = clock();
+
     switch (tipoOrdemDados) {
         case 0:
             printf("Executando Bubble Sort...\n");
@@ -636,14 +642,100 @@ int main(int argc, char const *argv[])
             return 1;
     }
 
+    tempoFim = clock();
+    tempoGastoMilissegundos = ((double)(tempoFim - tempoInicio) / CLOCKS_PER_SEC) * 1000.0;
+
+    double tempoRestante = tempoGastoMilissegundos;
+
+    int horas = (int)(tempoRestante / 3600000);
+    tempoRestante -= horas * 3600000;
+
+    int minutos = (int)(tempoRestante / 60000);
+    tempoRestante -= minutos * 60000;
+
+    int segundos = (int)(tempoRestante / 1000);
+    tempoRestante -= segundos * 1000;
+
+    double milissegundos = tempoRestante;
+
+    FILE *arqDados = fopen("resultado_ordenacao.csv", "w");
+    FILE *arqDadosBruto = fopen("resultado_ordenacao_bruto.csv", "w");
+    
+    if (arqDados != NULL) {
+        fprintf(arqDados, "Indice,Valor,Algoritmo,Quantidade,Duplicidade,Formato,Tempo_ms\n");
+        
+        for (int i = 0; i < qtd; i++) {
+            if (i == 0) {
+                fprintf(arqDados, "%d,%d,%s,%d,%s,%d,%.4f\n", 
+                        i, 
+                        valor[i],
+                        tipoOrdemDados == 0 ? "Bubble Sort" : (tipoOrdemDados == 1 ? "Merge Sort" : "Quick Sort"),
+                        qtd,
+                        duplicidadeDados ? "Com Duplicidade" : "Sem Duplicidade",
+                        opcaoOrdem,
+                        tempoGastoMilissegundos);
+            } else {
+                fprintf(arqDados, "%d,%d,,,,,\n", i, valor[i]);
+            }
+        }
+        
+        fclose(arqDados);
+        printf("\n[SUCESSO] Arquivo 'resultado_ordenacao.csv' gerado!\n");
+    } else {
+        printf("\n[ERRO] Nao foi possivel gerar o arquivo CSV.\n");
+    }
+
+    if (arqDadosBruto != NULL) {
+        fprintf(arqDadosBruto, "Indice,Valor\n");
+        
+        for (int i = 0; i < qtd; i++) {
+            if (i == 0) {
+                fprintf(arqDadosBruto, "%d,%d\n", 
+                        i, 
+                        valor[i]
+                        );
+            } else {
+                fprintf(arqDadosBruto, "%d,%d\n", i, valor[i]);
+            }
+        }
+        
+        fclose(arqDadosBruto);
+        printf("\n[SUCESSO] Arquivo 'resultado_ordenacao_bruto.csv' gerado!\n");
+    } else {
+        printf("\n[ERRO] Nao foi possivel gerar o arquivo CSV.\n");
+    }
+
+    
+
     //PRINT DOS DADOS.
     for (int i = 0; i < qtd; i++) {
         //printf("[%d]: %d\n", i, valor[i]);
         printf("%d\n", valor[i]);
     }
 
+    printf("\n=========================================\n");
+    printf("        METRICAS DE DESEMPENHO           \n");
+    printf("=========================================\n");
+    printf(" Algoritmo: %s\n", tipoOrdemDados == 0 ? "Bubble Sort" : (tipoOrdemDados == 1 ? "Merge Sort" : "Quick Sort"));
+    printf(" Quantidade de Dados: %d\n", qtd);
+    printf(" Duplicidade: %s\n", duplicidadeDados ? "Com Duplicidade" : "Sem Duplicidade");
+    printf(" Formato Geometrico: %d\n", opcaoOrdem);
+    printf("-----------------------------------------\n");
+    printf(" TEMPO DE EXECUCAO BRUTO: %.4f milissegundos\n", tempoGastoMilissegundos); 
+    printf(" TEMPO DE EXECUCAO FORMATADO: %02d:%02d:%02d.%03f\n", horas, minutos, segundos, milissegundos); 
+    printf("=========================================\n\n");
+
+    printf("\n=========================================\n");
+    printf(" Ordenacao concluida com sucesso!\n");
+    printf(" Pressione ENTER para fechar o programa...");
+    printf("\n=========================================\n");
+    
+    while (getchar() != '\n'); 
+    getchar(); 
+
     //APENAS QUANDO O USUARIO SAIR DO PROGRAMA DÁ FREE NOS DADOS
     free(dados);
     free(valor);
+
     return 0;
 }
